@@ -110,7 +110,7 @@ function [v, wn] = myklestad_clamped_clamped(mi, EIi, dx)
 
     % Converting the natural frequencies from symbolic to numeric values
     all_wn = double(subs(symbolic_wn)); % This can contain negative numbers
-    wn = all_wn(all_wn > 0); % Keep only positive numbers
+    wn = sort(all_wn(all_wn > 0)); % Keep only positive numbers, sorted from lowest to highest
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % CALCULATING STATE VECTORS (v) FOR MULTIPLE MODES
@@ -140,16 +140,16 @@ function [v, wn] = myklestad_clamped_clamped(mi, EIi, dx)
             v{i}{j} = zeros(4, 1);
         end
 
-        % TODO: determine M0 and Q0 in the right way. How to arbitrate M0, instead of 0?
-        Y0 = 12; psi0 = 0; M0 = 1; Q0 = -T(1, 3) * M0 / T(1, 4);
+        % TODO: determine M0 and Q0 in the right way. How to arbitrate M0, instead of 1?
+        Y0 = 0; psi0 = 0; M0 = 1; Q0 = -T(1, 3) * M0 / T(1, 4);
         v{i}{1} = [Y0; psi0; M0; Q0]; % station vector at start/left edge (wall)
         v{i}{2} = TF{1} * v{i}{1}; % station vector at first station
 
         for j = 3:(length(v{i}) - 1)
             % Creating a transfer matrix at station with symbolic natural frequency
             % converted to numeric natural frequency
-            Ts_iminus1 = double(subs(Ts{j - 1}, w, wn(i)));
-            v{i}{j} = Ts_iminus1 * v{i}{j - 1};
+            Ts_iminus2 = double(subs(Ts{j - 2}, w, wn(i)));
+            v{i}{j} = Ts_iminus2 * v{i}{j - 1};
         end
 
         v{i}{length(v)} = T * v{i}{1}; % station vector at end/right edge (wall)

@@ -69,24 +69,20 @@ function [v, wn] = myklestad_free_free(mi, EIi, dx)
     % CALCULATING OVERALL TRANSFER MATRIX (T)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % TODO: abstract method to calculate a field matrix
-    % so we don't repeat this here and inside the loop
-    % Initial Field Transfer Matrix
-    a_YM = (dx(1)^2) / (2 * EIi(1));
-    a_YQ = (dx(1)^3) / (3 * EIi(1));
-    a_psiM = dx(1) / EIi(1);
-    a_psiQ = (dx(1)^2) / (2 * EIi(1));
-    TF{1} = [1 dx(1) a_YM -a_YQ / 2;
-        0 1 a_psiM -a_psiQ;
-        0 0 1 -dx(1);
-        0 0 0 1]; % Field Matrix at first field
-
     % Overall Transfer Matrix (T = TS{n}*Ts{n-1}*...Ts{2}*Ts{1})
     T = Ts{1};
 
     for i = 2:(num_of_stations - 1)
         T = Ts{i} * T;
     end
+
+    % TODO: abstract method to calculate a station matrix
+    % so we don't repeat this here and inside the loop
+    % Final Station Transfer Matrix (TS{n})
+    TS{num_of_stations} = [1 0 0 0;
+                        0 1 0 0;
+                        0 0 1 0;
+                        -w^2 * mi(num_of_stations) 0 0 1];
 
     T = TS{num_of_stations} * T;
 
@@ -104,7 +100,7 @@ function [v, wn] = myklestad_free_free(mi, EIi, dx)
 
     % Converting the natural frequencies from symbolic to numeric values
     all_wn = double(subs(symbolic_wn)); % This can contain negative numbers
-    wn = all_wn(all_wn > 0); % Keep only positive numbers
+    wn = sort(all_wn(all_wn > 0)); % Keep only positive numbers and sorted from lowest to highest
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % CALCULATING STATE VECTORS (v) FOR MULTIPLE MODES
@@ -120,33 +116,29 @@ function [v, wn] = myklestad_free_free(mi, EIi, dx)
         % natural frequency for the overall matrix
         T = double(subs(T, w, wn(i)));
 
-        % We'll have one station vector for every station + 2 station vectors:
-        % one at the start/left edge, and one at the end/right edge
-        % If we have: |--FIELD0--STATION1--FIELD1--STATION2--FIELD2--|
-        % We get:     v0-------v1-----------------v2----------------v3
+        % We'll have one station vector for every station:
+        % If we have: STATION1--FIELD1--STATION2--FIELD2--STATION3
+        % We get:     v1----------------v2----------------v3
 
         % Preallocating the variable that will contain the station vectors
         % with 4x1 vectors
-
         v{i} = {};
 
-        for j = 1:(num_of_stations + 2)
+        for j = 1:(num_of_stations)
             v{i}{j} = zeros(4, 1);
         end
 
-        % TODO: determine M0 and Q0 in the right way. How to arbitrate M0, instead of 0?
-        Y0 = 12; psi0 = 0; M0 = 1; Q0 = -T(1, 3) * M0 / T(1, 4);
+        % TODO: determine Y0 and psi0 in the right way. How to arbitrate psi0, instead of 1?
+        psi0 = 1; Y0 = -T(3, 2) * psi0 / T(3, 1); M0 = 0; Q0 = 0;
         v{i}{1} = [Y0; psi0; M0; Q0]; % station vector at start/left edge (wall)
-        v{i}{2} = TF{1} * v{i}{1}; % station vector at first station
 
-        for j = 3:(length(v{i}) - 1)
+        for j = 2:(length(v{i}))
             % Creating a transfer matrix at station with symbolic natural frequency
             % converted to numeric natural frequency
             Ts_iminus1 = double(subs(Ts{j - 1}, w, wn(i)));
             v{i}{j} = Ts_iminus1 * v{i}{j - 1};
         end
 
-        v{i}{length(v)} = T * v{i}{1}; % station vector at end/right edge (wall)
     end
 
 end

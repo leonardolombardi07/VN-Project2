@@ -40,12 +40,7 @@ EI_beam = E * I_beam; % [N.m^2]
 % 2.1.a - II) Convergence analysis
 % 2.1.a - III) Calculating the first three bending natural frequencies and Eigen functions
 
-% Vector with increasing numbers of stations, for convergence analysis
-convergent_num_of_stations = [10];
-
-% for i = 1:length(convergent_num_of_stations)
-% num_of_stations = convergent_num_of_stations(i);
-num_of_stations = 10;
+num_of_stations = 14;
 num_of_fields = num_of_stations + 1;
 
 % Field length discretization
@@ -59,7 +54,26 @@ EIis = EI_beam * ones(num_of_fields, 1); % Lumped Stifness Vector
 mi = m_beam / num_of_stations; % Mass per station [kg/st]
 mis = mi * ones(num_of_stations, 1); % Lumped Masses Vector
 
-% [v, wn] = myklestad_clamped_clamped(mis, EIis, dxs);
+% Vector with increasing numbers of stations, for convergence analysis
+% UNCOMMENT TO RUN CONVERGENCE ANALYSIS FOR BEAM
+% convergent_num_of_stations = [6, 8, 10, 12, 20];
+
+% for i = 1:length(convergent_num_of_stations)
+%     num_of_stations = convergent_num_of_stations(i);
+%     num_of_fields = num_of_stations + 1;
+
+%     % Field length discretization
+%     dx = (L_beam / (num_of_fields)); % Length of Field [m]
+%     dxs = dx * ones(num_of_fields, 1); % Field Length Vector
+
+%     % EIs discretization
+%     EIis = EI_beam * ones(num_of_fields, 1); % Lumped Stifness Vector
+
+%     % Mass discretization
+%     mi = m_beam / num_of_stations; % Mass per station [kg/st]
+%     mis = mi * ones(num_of_stations, 1); % Lumped Masses Vector
+
+%     [v_myklestad, wn_myklestad] = myklestad_clamped_clamped(mis, EIis, dxs);
 % end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -67,8 +81,9 @@ mis = mi * ones(num_of_stations, 1); % Lumped Masses Vector
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Analytical results for comparison
-x = 0:dx:L_beam;
-[v_analytical_beam, wn_analytical_beam] = analytical(x, EI_beam, p_beam, A_beam, L_beam);
+% UNCOMMENT TO GET ANALYTICAL SOLUTION FOR BEAM
+% x_analytical = 0:dx:L_beam;
+% [Y_analytical_beam, wn_analytical_beam] = analytical(x_analytical, EI_beam, p_beam, A_beam, L_beam);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2.2) Calculating the vertical flexural vibrations of a ship using
@@ -93,37 +108,79 @@ displacement = 18036.9; % [t]
 % non-uniform ship vertical flexural vibrations with Mykelstad method
 % 2.2.a - II) Convergence analysis
 
-% Vector with increasing numbers of stations, for convergence analysis
-convergent_num_of_stations = [10];
+% UNCOMMENT TO PLOT NORMAL MODES FOR
 
-% for i = 1:length(convergent_num_of_stations)
-% num_of_stations = convergent_num_of_stations(i);
-num_of_stations = 10;
-num_of_fields = num_of_stations - 1;
+% num_of_stations = 20;
+% num_of_fields = num_of_stations - 1;
 
-% Field length discretization. Considering a uniform ship here
-dx = (Lpp / (num_of_fields)); % Length of Field [m]
-dxs = dx * ones(num_of_fields, 1); % Field Length Vector
+% % Field length discretization. Considering a uniform ship here
+% dx = (Lpp / (num_of_fields)); % Length of Field [m]
+% dxs = dx * ones(num_of_fields, 1); % Field Length Vector
 
-% Vector with the position of every station
-x = 0:dx:Lpp;
+% % Vector with the position of every station
+% x_ship = 0:dx:Lpp;
 
-% EIs discretization
-% EIis = get_lumped_stiffness_vector(x);
+% % EIs discretization
+% EIis = get_lumped_stiffness_vector(x_ship);
 
-% Mass discretization
-% mi = get_lumped_mass_vector(x);
-% added_mi = get_added_mass_vector(x);
-% mis = mi + added_mi;
+% % Mass discretization
+% mis = get_lumped_mass_vector(x_ship); % we consider the addded mass here
 
 % [v_ship, wn_ship] = myklestad_free_free(mis, EIis, dxs);
+
+% Y1 = extract_mode_from_station_vector(v_ship{1});
+% Y2 = extract_mode_from_station_vector(v_ship{2});
+% Y3 = extract_mode_from_station_vector(v_ship{3});
+
+% figure;
+% subplot(3, 1, 1);
+% xlabel("x [m]")
+% ylabel("Y1")
+% title("Mode Vector for first ship natural frequency")
+% plot(x_ship, Y1);
+
+% subplot(3, 1, 2);
+% plot(x_ship, Y2);
+% xlabel("x [m]")
+% ylabel("Y1")
+% title("Mode Vector for second ship natural frequency")
+
+% subplot(3, 1, 3);
+% plot(x_ship, Y3);
+% xlabel("x [m]")
+% ylabel("Y1")
+% title("Mode Vector for third ship natural frequency")
+
+% Vector with increasing numbers of stations, for convergence analysis
+% UNCOMMENT TO RUN CONVERGENCE ANALYSIS FOR SHIP
+% convergent_num_of_stations = [20];
+
+% for i = 1:length(convergent_num_of_stations)
+%     num_of_stations = convergent_num_of_stations(i);
+%     num_of_fields = num_of_stations - 1;
+
+%     % Field length discretization. Considering a uniform ship here
+%     dx = (Lpp / (num_of_fields)); % Length of Field [m]
+%     dxs = dx * ones(num_of_fields, 1); % Field Length Vector
+
+%     % Vector with the position of every station
+%     x_ship = 0:dx:Lpp;
+
+%     % EIs discretization
+%     EIis = get_lumped_stiffness_vector(x_ship);
+
+%     % Mass discretization
+%     mis = get_lumped_mass_vector(x_ship); % we consider the addded mass here
+
+%     [v_ship, wn_ship] = myklestad_free_free(mis, EIis, dxs);
+
 % end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2.2 b) Calculating the first three natural frequencies by using a simple
 % formula
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-wn = kumai(B, D, T, Lpp, displacement)
+wn_kumai = kumai(B, D, T, Lpp, displacement)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2.1 c) Compare the estimations of natural frequency and natural modes
