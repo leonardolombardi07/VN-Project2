@@ -10,12 +10,15 @@ function [v, wn] = myklestad_clamped_clamped(mi, EIi, dx)
     % Input
     % ----------
     %       [mi] :      Lumped Masses Vector                              [n,1]
-    %       [EIi] :     Lumped Stifness Vector                         [n+1,1]
-    %       [dx]:       Field Length Vector                            [n+1,1]
+    %       [EIi] :     Lumped Stifness Vector                          [n+1,1]
+    %       [dx]:       Field Length Vector                             [n+1,1]
     %
     % Output
     % ----------
-    %       [v]:        Station Vectors                                   [n,1]
+    %       [v]:        Station Vectors                        cell array [n,3]
+    %                    - three vectors (for the first three natural
+    %                    frequencies) containing station vectors for that given
+    %                    frequency
     %                    - each station vector has the form [Y, psi, M, Q],
     %                    where "Y" stands for translational displacement, "psi"
     %                    for angular displacement, "M" bending moment and "Q"
@@ -39,7 +42,7 @@ function [v, wn] = myklestad_clamped_clamped(mi, EIi, dx)
     % See: https://www.mathworks.com/matlabcentral/answers/496101-matrix-of-matrices-matrix-with-matrices-inside-it
     TF = {}; % Field Transfer Matrices
     TS = {}; % Station Transfer Matrices
-    Ts = {}; % Transfer Matrices - cell array containing a transfer matrix at each station
+    T = {}; % Transfer Matrices
 
     % TODO: make this comment clearer or find a better way to access
     % data from fields
@@ -70,11 +73,11 @@ function [v, wn] = myklestad_clamped_clamped(mi, EIi, dx)
 
         % Transfer matrix relating station vector on left side of station i+1
         % to station vector on the left side of station i
-        Ts{i - 1} = TF{i} * TS{i - 1};
+        T{i - 1} = TF{i} * TS{i - 1};
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % CALCULATING OVERALL TRANSFER MATRIX (T)
+    % CALCULATING OVERALL TRANSFER MATRIX (T_overall)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % TODO: abstract method to calculate a field matrix
@@ -89,24 +92,27 @@ function [v, wn] = myklestad_clamped_clamped(mi, EIi, dx)
         0 0 1 -dx(1);
         0 0 0 1]; % Field Matrix at first field
 
-    % Overall Transfer Matrix (T = Ts{n}*Ts{n-1}*...Ts{2}*Ts{1}*TF{1})
-    T = TF{1};
+    % Overall Transfer Matrix (T_overall = T{n}*T{n-1}*...T{2}*T{1}*TF{1})
+    % Unfortunately, in math books the overall transfer matrix is also
+    % represented by the letter "T". Here, we are a bit more explicit naming it
+    % "T_overall"
+    T_overall = TF{1};
 
-    for i = 1:length(Ts)
-        T = Ts{i} * T;
+    for i = 1:length(T)
+        T_overall = T{i} * T_overall;
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % CALCULATING NATURAL FREQUENCIES (wn)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % This is found by carefull analysis of vRn = T*vL0
+    % This is found by careful analysis of vRn = T_overall*vL0
     % (where vRn is the station vector at the end edge
     % and vL0 is the station vector at the start edge)
     % Knowing that, for a clamped edge, Y=0, psi=0, M≠0, and Q≠0
     % we find that the determinant below must be equal to 0
-    symbolic_wn = solve(det([T(1, 3) T(1, 4);
-                        T(2, 3) T(2, 4)]) == 0, w);
+    symbolic_wn = solve(det([T_overall(1, 3) T_overall(1, 4);
+                        T_overall(2, 3) T_overall(2, 4)]) == 0, w);
 
     % Converting the natural frequencies from symbolic to numeric values
     all_wn = double(subs(symbolic_wn)); % This can contain negative numbers
@@ -124,7 +130,7 @@ function [v, wn] = myklestad_clamped_clamped(mi, EIi, dx)
     for i = 1:max_num_of_modes
         % Replacing the symbolic natural frequency with the calculated numeric
         % natural frequency for the overall matrix
-        T = double(subs(T, w, wn(i)));
+        T_overall_for_wn = double(subs(T_overall, w, wn(i)));
 
         % We'll have one station vector for every station + 2 station vectors:
         % one at the start/left edge, and one at the end/right edge
@@ -141,18 +147,20 @@ function [v, wn] = myklestad_clamped_clamped(mi, EIi, dx)
         end
 
         % TODO: determine M0 and Q0 in the right way. How to arbitrate M0, instead of 1?
-        Y0 = 0; psi0 = 0; M0 = 1; Q0 = -T(1, 3) * M0 / T(1, 4);
+        % Q0 is also found by analysis of vRn = T_overall*vL0
+        Y0 = 0; psi0 = 0; M0 = 1;
+        Q0 = -T_overall_for_wn(1, 3) * M0 / T_overall_for_wn(1, 4);
         v{i}{1} = [Y0; psi0; M0; Q0]; % station vector at start/left edge (wall)
         v{i}{2} = TF{1} * v{i}{1}; % station vector at first station
 
         for j = 3:(length(v{i}) - 1)
-            % Creating a transfer matrix at station with symbolic natural frequency
-            % converted to numeric natural frequency
-            Ts_iminus2 = double(subs(Ts{j - 2}, w, wn(i)));
-            v{i}{j} = Ts_iminus2 * v{i}{j - 1};
+            % Replacing the symbolic natural frequency with the calculated numeric
+            % natural frequency for the transfer matrix at given station
+            T_numeric = double(subs(T{j - 2}, w, wn(i)));
+            v{i}{j} = T_numeric * v{i}{j - 1};
         end
 
-        v{i}{length(v)} = T * v{i}{1}; % station vector at end/right edge (wall)
+        v{i}{length(v{i})} = T_overall_for_wn * v{i}{1}; % station vector at end/right edge (wall)
     end
 
 end

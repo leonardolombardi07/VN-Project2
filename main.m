@@ -40,8 +40,10 @@ EI_beam = E * I_beam; % [N.m^2]
 % 2.1.a - II) Convergence analysis
 % 2.1.a - III) Calculating the first three bending natural frequencies and Eigen functions
 
-num_of_stations = 14;
-num_of_fields = num_of_stations + 1;
+% UNCOMMENT TO PLOT NORMAL MODES FOR BEAM
+
+num_of_stations = 10;
+num_of_fields = num_of_stations +1;
 
 % Field length discretization
 dx = (L_beam / (num_of_fields)); % Length of Field [m]
@@ -54,24 +56,53 @@ EIis = EI_beam * ones(num_of_fields, 1); % Lumped Stifness Vector
 mi = m_beam / num_of_stations; % Mass per station [kg/st]
 mis = mi * ones(num_of_stations, 1); % Lumped Masses Vector
 
+[v_beam, wn_beam] = myklestad_clamped_clamped(mis, EIis, dxs);
+
+% Extracting mode vectors from station vectors
+Y1 = extract_mode_from_station_vector(v_beam{1});
+Y2 = extract_mode_from_station_vector(v_beam{2});
+Y3 = extract_mode_from_station_vector(v_beam{3});
+
+% Position of stations vector
+x_beam = 0:dx:L_beam;
+
+figure;
+subplot(3, 1, 1);
+xlabel("x [m]")
+ylabel("Y1")
+title("Mode Vector for beam first natural frequency")
+plot(x_beam, Y1);
+
+subplot(3, 1, 2);
+plot(x_beam, Y2);
+xlabel("x [m]")
+ylabel("Y1")
+title("Mode Vector for beam second natural frequency")
+
+subplot(3, 1, 3);
+plot(x_beam, Y3);
+xlabel("x [m]")
+ylabel("Y1")
+title("Mode Vector for beam third natural frequency")
+
 % Vector with increasing numbers of stations, for convergence analysis
 % UNCOMMENT TO RUN CONVERGENCE ANALYSIS FOR BEAM
 % convergent_num_of_stations = [6, 8, 10, 12, 20];
 
 % for i = 1:length(convergent_num_of_stations)
-%     num_of_stations = convergent_num_of_stations(i);
-%     num_of_fields = num_of_stations + 1;
+% num_of_stations = convergent_num_of_stations(i);
+% num_of_fields = num_of_stations + 1;
 
-%     % Field length discretization
-%     dx = (L_beam / (num_of_fields)); % Length of Field [m]
-%     dxs = dx * ones(num_of_fields, 1); % Field Length Vector
+% % Field length discretization
+% dx = (L_beam / (num_of_fields)); % Length of Field [m]
+% dxs = dx * ones(num_of_fields, 1); % Field Length Vector
 
-%     % EIs discretization
-%     EIis = EI_beam * ones(num_of_fields, 1); % Lumped Stifness Vector
+% % EIs discretization
+% EIis = EI_beam * ones(num_of_fields, 1); % Lumped Stifness Vector
 
-%     % Mass discretization
-%     mi = m_beam / num_of_stations; % Mass per station [kg/st]
-%     mis = mi * ones(num_of_stations, 1); % Lumped Masses Vector
+% % Mass discretization
+% mi = m_beam / num_of_stations; % Mass per station [kg/st]
+% mis = mi * ones(num_of_stations, 1); % Lumped Masses Vector
 
 %     [v_myklestad, wn_myklestad] = myklestad_clamped_clamped(mis, EIis, dxs);
 % end
