@@ -41,49 +41,48 @@ EI_beam = E * I_beam; % [N.m^2]
 % 2.1.a - III) Calculating the first three bending natural frequencies and Eigen functions
 
 % UNCOMMENT TO PLOT NORMAL MODES FOR BEAM
+% num_of_stations = 10;
+% num_of_fields = num_of_stations +1;
 
-num_of_stations = 10;
-num_of_fields = num_of_stations +1;
+% % Field length discretization
+% dx = (L_beam / (num_of_fields)); % Length of Field [m]
+% dxs = dx * ones(num_of_fields, 1); % Field Length Vector
 
-% Field length discretization
-dx = (L_beam / (num_of_fields)); % Length of Field [m]
-dxs = dx * ones(num_of_fields, 1); % Field Length Vector
+% % EIs discretization
+% EIis = EI_beam * ones(num_of_fields, 1); % Lumped Stifness Vector
 
-% EIs discretization
-EIis = EI_beam * ones(num_of_fields, 1); % Lumped Stifness Vector
+% % Mass discretization
+% mi = m_beam / num_of_stations; % Mass per station [kg/st]
+% mis = mi * ones(num_of_stations, 1); % Lumped Masses Vector
 
-% Mass discretization
-mi = m_beam / num_of_stations; % Mass per station [kg/st]
-mis = mi * ones(num_of_stations, 1); % Lumped Masses Vector
+% [v_beam, wn_beam] = myklestad_clamped_clamped(mis, EIis, dxs);
 
-[v_beam, wn_beam] = myklestad_clamped_clamped(mis, EIis, dxs);
+% % Extracting mode vectors from station vectors
+% Y1 = extract_mode_from_station_vector(v_beam{1});
+% Y2 = extract_mode_from_station_vector(v_beam{2});
+% Y3 = extract_mode_from_station_vector(v_beam{3});
 
-% Extracting mode vectors from station vectors
-Y1 = extract_mode_from_station_vector(v_beam{1});
-Y2 = extract_mode_from_station_vector(v_beam{2});
-Y3 = extract_mode_from_station_vector(v_beam{3});
+% % Position of stations vector
+% x_beam = 0:dx:L_beam;
 
-% Position of stations vector
-x_beam = 0:dx:L_beam;
+% figure;
+% subplot(3, 1, 1);
+% xlabel("x [m]")
+% ylabel("Y1")
+% title("Mode Vector for beam first natural frequency")
+% plot(x_beam, Y1);
 
-figure;
-subplot(3, 1, 1);
-xlabel("x [m]")
-ylabel("Y1")
-title("Mode Vector for beam first natural frequency")
-plot(x_beam, Y1);
+% subplot(3, 1, 2);
+% plot(x_beam, Y2);
+% xlabel("x [m]")
+% ylabel("Y1")
+% title("Mode Vector for beam second natural frequency")
 
-subplot(3, 1, 2);
-plot(x_beam, Y2);
-xlabel("x [m]")
-ylabel("Y1")
-title("Mode Vector for beam second natural frequency")
-
-subplot(3, 1, 3);
-plot(x_beam, Y3);
-xlabel("x [m]")
-ylabel("Y1")
-title("Mode Vector for beam third natural frequency")
+% subplot(3, 1, 3);
+% plot(x_beam, Y3);
+% xlabel("x [m]")
+% ylabel("Y1")
+% title("Mode Vector for beam third natural frequency")
 
 % Vector with increasing numbers of stations, for convergence analysis
 % UNCOMMENT TO RUN CONVERGENCE ANALYSIS FOR BEAM
@@ -139,48 +138,49 @@ displacement = 18036.9; % [t]
 % non-uniform ship vertical flexural vibrations with Mykelstad method
 % 2.2.a - II) Convergence analysis
 
-% UNCOMMENT TO PLOT NORMAL MODES FOR
+% UNCOMMENT TO PLOT NORMAL MODES FOR SHIP
 
-% num_of_stations = 20;
-% num_of_fields = num_of_stations - 1;
+num_of_stations = 12;
+num_of_fields = num_of_stations - 1;
 
-% % Field length discretization. Considering a uniform ship here
-% dx = (Lpp / (num_of_fields)); % Length of Field [m]
-% dxs = dx * ones(num_of_fields, 1); % Field Length Vector
+% Field length discretization. Considering a uniform ship here
+dx = (Lpp / (num_of_fields)); % Length of Field [m]
+dxs = dx * ones(num_of_fields, 1); % Field Length Vector
 
-% % Vector with the position of every station
-% x_ship = 0:dx:Lpp;
+% Vector with the position of every station
+x_ship = 0:dx:Lpp;
 
-% % EIs discretization
-% EIis = get_lumped_stiffness_vector(x_ship);
+% EIs discretization
+EIis = get_lumped_stiffness_vector(x_ship);
 
-% % Mass discretization
-% mis = get_lumped_mass_vector(x_ship); % we consider the addded mass here
+% Mass discretization
+mis = get_lumped_mass_vector(x_ship); % we consider the addded mass here
 
-% [v_ship, wn_ship] = myklestad_free_free(mis, EIis, dxs);
+[v_ship, wn_ship] = myklestad_free_free(mis, EIis, dxs);
 
-% Y1 = extract_mode_from_station_vector(v_ship{1});
-% Y2 = extract_mode_from_station_vector(v_ship{2});
-% Y3 = extract_mode_from_station_vector(v_ship{3});
+Y1 = extract_mode_from_station_vector(v_ship{1});
+Y2 = extract_mode_from_station_vector(v_ship{2});
+Y3 = extract_mode_from_station_vector(v_ship{3});
 
-% figure;
-% subplot(3, 1, 1);
-% xlabel("x [m]")
-% ylabel("Y1")
-% title("Mode Vector for first ship natural frequency")
-% plot(x_ship, Y1);
+figure;
+subplot(3, 1, 1);
+xlabel("x [m]")
+ylabel("Y1")
+title("Mode Vector for first ship natural frequency")
+plot(x_ship, Y1);
 
-% subplot(3, 1, 2);
-% plot(x_ship, Y2);
-% xlabel("x [m]")
-% ylabel("Y1")
-% title("Mode Vector for second ship natural frequency")
+subplot(3, 1, 2);
+plot(x_ship, Y2);
+xlabel("x [m]")
+ylabel("Y1")
+title("Mode Vector for second ship natural frequency")
 
-% subplot(3, 1, 3);
-% plot(x_ship, Y3);
-% xlabel("x [m]")
-% ylabel("Y1")
-% title("Mode Vector for third ship natural frequency")
+subplot(3, 1, 3);
+plot(x_ship, Y3);
+xlabel("x [m]")
+ylabel("Y1")
+title("Mode Vector for third ship natural frequency")
+return;
 
 % Vector with increasing numbers of stations, for convergence analysis
 % UNCOMMENT TO RUN CONVERGENCE ANALYSIS FOR SHIP
